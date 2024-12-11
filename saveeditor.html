@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save File Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .output {
+            margin-top: 20px;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Save File Editor</h1>
+
+<div>
+    <h2>Save File Input</h2>
+    <textarea id="encodedInput" placeholder="Paste your encoded save file here"></textarea>
+    <button onclick="decodeSave()">Decode</button>
+</div>
+
+<div>
+    <h2>Edit Parameters</h2>
+    <div id="formContainer"></div>
+    <button onclick="encodeSave()">Re-Encode</button>
+</div>
+
+<div class="output">
+    <h2>Encoded Save File Output</h2>
+    <textarea id="encodedOutput" readonly></textarea>
+    <button onclick="copyToClipboard()">Copy to Clipboard</button>
+</div>
+
+<script>
+    let saveFile = {};
+
+    function decodeSave() {
+        const input = document.getElementById("encodedInput").value;
+        try {
+            const decoded = atob(input);
+            saveFile = JSON.parse(decoded);
+            renderForm();
+            alert("Save file decoded successfully!");
+        } catch (error) {
+            alert("Failed to decode save file. Please check the input.");
+        }
+    }
+
+    function renderForm() {
+        const formContainer = document.getElementById("formContainer");
+        formContainer.innerHTML = ""; // Clear existing form
+
+        Object.keys(saveFile).forEach(key => {
+            const value = saveFile[key];
+            const group = document.createElement("div");
+            group.classList.add("form-group");
+
+            if (typeof value === "object" && value !== null) {
+                group.innerHTML = `<label>${key} (JSON Object)</label><textarea id="${key}" rows="5">${JSON.stringify(value, null, 2)}</textarea>`;
+            } else {
+                group.innerHTML = `<label>${key}</label><input id="${key}" value="${value}" />`;
+            }
+
+            formContainer.appendChild(group);
+        });
+    }
+
+    function encodeSave() {
+        const formContainer = document.getElementById("formContainer");
+        const inputs = formContainer.querySelectorAll("input, textarea");
+
+        inputs.forEach(input => {
+            const key = input.id;
+            const value = input.value;
+
+            try {
+                saveFile[key] = JSON.parse(value); // Try parsing as JSON for objects
+            } catch {
+                saveFile[key] = isNaN(value) ? value : parseFloat(value); // Otherwise parse as number or string
+            }
+        });
+
+        const encoded = btoa(JSON.stringify(saveFile));
+        document.getElementById("encodedOutput").value = encoded;
+        alert("Save file re-encoded successfully!");
+    }
+
+    function copyToClipboard() {
+        const output = document.getElementById("encodedOutput");
+        output.select();
+        document.execCommand("copy");
+        alert("Copied to clipboard!");
+    }
+</script>
+
+</body>
+</html>
